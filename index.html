@@ -16,10 +16,288 @@
         <button id="setup">SETUP</button>
     </header>
     <div class="main" id="main">
+        <canvas id="c"></canvas>
     </div>
     <footer>
         <button id="reset">Reset</button>
     </footer>
-    <script src="js/main.js"></script>
+    <script type="module">
+
+        import * as THREE from './build/three.module.js';
+        import { OrbitControls } from './build/OrbitControls.js';
+
+        function main() {
+            function makeInstance(geometry, color, x) {
+                const material = new THREE.MeshPhongMaterial({color});
+
+                const cube = new THREE.Mesh(geometry, material);
+                scene.add(cube);
+
+                cube.position.x = x;
+                return cube;
+            }
+
+            function resizeRendererToDisplaySize(renderer) {
+                const canvas = renderer.domElement;
+                const pixelRatio = window.devicePixelRatio * 2;
+                const width = canvas.clientWidth * pixelRatio | 0;
+                const height = canvas.clientHeight * pixelRatio | 0;
+                const needResize = canvas.width !== width || canvas.height !== height;
+                if (needResize) {
+                    renderer.setSize(width, height, false);
+                }
+                return needResize;
+            }
+
+            function addSolidGeometry(x, y, geometry) {
+                const mesh = new THREE.Mesh(geometry, createMaterial());
+                addObject(x, y, mesh);
+            }
+
+            function addLineGeometry(x, y, geometry) {
+                const material = new THREE.LineBasicMaterial({color: 0xFFFFFF});
+                const mesh = new THREE.LineSegments(geometry, material);
+                addObject(x, y, mesh);
+            }
+
+            function addObject(x, y, obj) {
+                obj.position.x = x * spread;
+                obj.position.y = y * spread;
+
+                scene.add(obj);
+                objects.push(obj);
+            }
+
+            // Create material that reflects light
+            function createMaterial() {
+                const material = new THREE.MeshPhongMaterial({
+                    side: THREE.DoubleSide,
+                    emissive: 0x0000FF,
+                });
+
+                const hue = Math.random();
+                const saturation = 1;
+                const luminance = .5;
+                material.color.setHSL(hue, saturation, luminance);
+
+                return material;
+            }
+
+            // Connect to the Canvas and Renderer
+            const canvas = document.querySelector("#c");
+            const renderer = new THREE.WebGLRenderer({canvas});
+            const objects = []; // Objects in Scene
+            const spread = 1; //
+
+            // Create a new Camera
+            const fov = 45;
+            const aspect = 2;
+            const near = 0.1;
+            const far = 1000;
+            const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+            const controls = new OrbitControls( camera, renderer.domElement );
+            
+            camera.position.set( 0, 0, 18 );
+            controls.update();
+
+            // Create Scene
+            const scene = new THREE.Scene();
+
+            {
+                const color = 0xFFFFFF;
+                const intensity = 1;
+                const light = new THREE.DirectionalLight(color, intensity);
+                light.position.set(-1, 2, 100);
+                scene.add(light);
+            }
+
+
+            
+            class ParticleBlock {
+                constructor(x, y, value, player) {
+                    //super();
+                    this.x = x;
+                    this.y = y;
+                    this.value = value;
+                    this.player = player;
+                    this.mesh = new THREE.Object3D();
+
+                    // Create Box geometry
+                    const boxWidth = 1;
+                    const boxHeight = 1;
+                    const boxDepth = 1;
+                    const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+
+                    const edges = new THREE.EdgesGeometry(geometry);
+                    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0xffffff}));
+
+                    line.position.x = x-6;
+                    line.position.y = y-6;
+
+                    this.mesh.add(line);
+                    const block = new THREE.Object3D();
+                    block.position.set(-6, -6, 0);
+                    this.mesh.add(block);
+                    // Add particles using grid value
+                    for (let i = 0; i < value; i++) {
+                        //console.log(value);
+                        const radius = .25;
+                        const segments = 50;
+                        const particleGeometry = new THREE.SphereGeometry(radius, segments, segments);
+                        const particleMesh = new THREE.Mesh(particleGeometry, createMaterial());
+                        particleMesh.position.x = x + 0.25*i;
+                        particleMesh.position.y = y + 0.25*i;
+                        block.add(particleMesh);
+                    }
+                }
+
+/*                set value(v) {
+                    this.value = v;
+                }
+
+                get value() {
+                    return this.value;
+                }
+
+                set player(p) {
+                    this.player = p;
+                }
+
+                get player() {
+                    return this.player;
+                }*/
+            }
+
+            let world = null;
+            let particleWorld = null;
+            function createWorld(rows, columns) {
+                world = new Array(rows);
+                particleWorld = new Array(rows);
+                for (let i = 0; i < world.length; i++) {
+                    world[i] = new Array(columns);
+                    particleWorld[i] = new Array(columns);
+                    for (let j = 0; j < world[i].length; j++) {
+                        world[i][j] = Math.floor(Math.random() * 4);
+                       particleWorld[i][j] = new ParticleBlock(i, j, world[i][j], 1);
+                        scene.add(particleWorld[i][j].mesh);
+                    }
+                }
+                return world;
+            }
+
+            function showWorld() {
+                
+            }
+
+            function printWorld(world) {
+                console.log(world);
+            }
+
+            /*class Particle {
+                constructor(player) {
+
+                } 
+            }*/
+
+            world = createWorld(12, 12);
+            printWorld(world);
+
+            // Create BoxGeometry(Shape of the object)
+            /*const boxWidth = 1;
+            const boxHeight = 1;
+            const boxDepth = 1;
+            const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+
+            const edges = new THREE.EdgesGeometry(geometry);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0xffffff}));
+            line.position.x += 2;
+            scene.add(line);
+
+            const radius = .5;
+            const segments = 50;
+            const particleGeometry = new THREE.SphereGeometry(radius, segments, segments);
+            const particleMesh = new THREE.Mesh(particleGeometry, createMaterial());
+            scene.add(particleMesh);*/
+            //addSolidGeometry(6, 6, particleMesh);
+            /*/addLineGeometry(0, 0, new THREE.EdgesGeometry(geometry, 15));
+            addLineGeometry(0, 0, new THREE.EdgesGeometry(geometry, 15));
+            addLineGeometry(1, 1, new THREE.EdgesGeometry(geometry, 15));
+            addLineGeometry(-1, 0, new THREE.EdgesGeometry(geometry, 15));
+            addLineGeometry(0, -1, new THREE.EdgesGeometry(geometry, 15));*/
+
+            /*{
+                // Sphere
+                const radius = .5;
+                const widthSegments = 12;
+                const heightSegments = 12;
+                addSolidGeometry(1, -1, new THREE.SphereGeometry(radius, widthSegments, heightSegments));
+            }*/
+
+            /*/const size = 25;
+            const divisions = 10;
+
+            const gridHelper = new THREE.GridHelper(size, divisions);
+            gridHelper.position.x += .5;
+            gridHelper.position.y += .5;
+            gridHelper.rotation.x += Math.PI * .5;
+            scene.add(gridHelper);
+
+            const radius = 1;
+            const segments = 50;
+            const particleGeometry = new THREE.SphereGeometry(radius, segments, segments);
+            const particleMesh = new THREE.Mesh(particleGeometry, createMaterial());
+            addObject(0, 0, particleMesh);
+            /*{
+                // Flat Cirlce
+                const radius = 7;
+                const segments = 50;
+                addSolidGeometry(-2, -1, new THREE.CircleGeometry(radius, segments));
+            }*/
+
+            /* Create Color using HEX Values(How to draw the object, shiny or flat, what texture(s) to apply. ETC.)
+            const material = new THREE.MeshPhongMaterial({color: 0x44aa88}); // greenish blue
+
+            // Create Mesh(using geometry and material)
+            const cube = new THREE.Mesh(geometry, material);
+
+            // Add Mesh to Scene
+            scene.add(cube);*/
+
+            /*const cubes = [
+                makeInstance(geometry, 0x44aa88, 0),
+                makeInstance(geometry, 0x8844aa, -2),
+                makeInstance(geometry, 0xaa8844, 2)
+            ];*/
+
+            // Render Scene
+            renderer.render(scene, camera);
+            console.log(scene);
+
+            function render(time) {
+                time *= 0.001; // Conver time to seconds
+
+                if (resizeRendererToDisplaySize(renderer)) {
+                    const canvas = renderer.domElement;
+                    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                    camera.updateProjectionMatrix();
+                }
+
+                /*cubes.forEach((cube, ndx) => {
+                    const speed = 1 + ndx*.1;
+                    const rot = time * speed;
+                   
+                    cube.rotation.x = rot;
+                    cube.rotation.y = rot; 
+                });*/
+
+                controls.update();
+                renderer.render(scene, camera);
+                requestAnimationFrame(render);
+            }
+            requestAnimationFrame(render);
+        }
+
+        main();
+    </script>
 </body>
 </html>
