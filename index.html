@@ -72,10 +72,24 @@
             function createMaterial() {
                 const material = new THREE.MeshPhongMaterial({
                     side: THREE.DoubleSide,
-                    emissive: 0x0000FF,
+                    emissive: 0xFFFFFF,
                 });
 
                 const hue = Math.random();
+                const saturation = 1;
+                const luminance = .5;
+                material.color.setHSL(hue, saturation, luminance);
+
+                return material;
+            }
+
+            function createMaterial(value) {
+                const material = new THREE.MeshPhongMaterial({
+                    side: THREE.DoubleSide,
+                    emissive: 0x0000FF,
+                });
+
+                const hue = value*.3;
                 const saturation = 1;
                 const luminance = .5;
                 material.color.setHSL(hue, saturation, luminance);
@@ -88,6 +102,7 @@
             const renderer = new THREE.WebGLRenderer({canvas});
             const objects = []; // Objects in Scene
             const spread = 1; //
+            const size = 12;
 
             // Create a new Camera
             const fov = 45;
@@ -97,7 +112,7 @@
             const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
             const controls = new OrbitControls( camera, renderer.domElement );
             
-            camera.position.set( 0, 0, 18 );
+            camera.position.set( 0, 0, size + 8 );
             controls.update();
 
             // Create Scene
@@ -114,10 +129,11 @@
 
             
             class ParticleBlock {
-                constructor(x, y, value, player) {
+                constructor(x, y, value, player, size) {
                     //super();
                     this.x = x;
                     this.y = y;
+                    let z = 0;
                     this.value = value;
                     this.player = player;
                     this.mesh = new THREE.Object3D();
@@ -131,12 +147,18 @@
                     const edges = new THREE.EdgesGeometry(geometry);
                     const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0xffffff}));
 
-                    line.position.x = x-6;
-                    line.position.y = y-6;
+                    line.position.x = x-size/2;
+                    line.position.y = y-size/2;
 
                     this.mesh.add(line);
-                    const block = new THREE.Object3D();
-                    block.position.set(-6, -6, 0);
+
+                    const material = new THREE.MeshPhongMaterial({color: 0xff00ff});
+                    const block = /*new THREE.Mesh(geometry, material)*/new THREE.Object3D();
+
+                    //block.position.set(x-size/2, y-size/2, 0);
+                    block.position.x = x-size/2;
+                    block.position.y = y-size/2;
+
                     this.mesh.add(block);
                     // Add particles using grid value
                     for (let i = 0; i < value; i++) {
@@ -144,10 +166,44 @@
                         const radius = .25;
                         const segments = 50;
                         const particleGeometry = new THREE.SphereGeometry(radius, segments, segments);
-                        const particleMesh = new THREE.Mesh(particleGeometry, createMaterial());
-                        particleMesh.position.x = x + 0.25*i;
-                        particleMesh.position.y = y + 0.25*i;
+                        const particleMesh = new THREE.Mesh(particleGeometry, createMaterial(i));
+                        
+                        /*let dx, dy, dz;
+
+                        if (i === 0) {
+                            dx = 1;
+                            dy = 0;
+                            dz = 0;
+                        }
+                        
+                        if (i === 1) {
+                            dx = 0;
+                            dy = 1;
+                            dz = 0;
+                        }
+                        
+                        if (i === 2) {
+                            dx = 0;
+                            dy = 0;
+                            dz = 1;
+                        }*/
+
+                        /*particleMesh.position.x = x*(dx) + 0.25*i;
+                        particleMesh.position.y = y*(dy) + 0.25*i;
+                        particleMesh.position.z = z*(dz) + 0.25*i;*/
                         block.add(particleMesh);
+                        var v = new THREE.Vector3();
+                        /*v.copy(object.position);
+                        object.localToWorld(v);
+                        parent.worldToLocal(v);
+                        console.log(v);*/
+                        if (i === 0) {
+                            particleMesh.position.x = particleMesh.position.x + .25;
+                        } else if (i === 1) {
+                            particleMesh.position.y = particleMesh.position.y + .25;
+                        } else {
+                            particleMesh.position.z = particleMesh.position.z + .25;
+                        }
                     }
                 }
 
@@ -178,7 +234,7 @@
                     particleWorld[i] = new Array(columns);
                     for (let j = 0; j < world[i].length; j++) {
                         world[i][j] = Math.floor(Math.random() * 4);
-                       particleWorld[i][j] = new ParticleBlock(i, j, world[i][j], 1);
+                       particleWorld[i][j] = new ParticleBlock(i, j, world[i][j], 1, size);
                         scene.add(particleWorld[i][j].mesh);
                     }
                 }
@@ -199,7 +255,7 @@
                 } 
             }*/
 
-            world = createWorld(12, 12);
+            world = createWorld(size, size);
             printWorld(world);
 
             // Create BoxGeometry(Shape of the object)
