@@ -88,6 +88,7 @@
             const renderer = new THREE.WebGLRenderer({canvas});
             const objects = []; // Objects in Scene
             const spread = 1; //
+            const size = 2;
 
             // Create a new Camera
             const fov = 45;
@@ -114,7 +115,7 @@
 
             
             class ParticleBlock {
-                constructor(x, y, value, player) {
+                constructor(x, y, value, player, size) {
                     //super();
                     this.x = x;
                     this.y = y;
@@ -131,22 +132,27 @@
                     const edges = new THREE.EdgesGeometry(geometry);
                     const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0xffffff}));
 
-                    line.position.x = x-6;
-                    line.position.y = y-6;
+                    line.position.x = x-size;
+                    line.position.y = y-size;
 
                     this.mesh.add(line);
-                    const block = new THREE.Object3D();
-                    block.position.set(-6, -6, 0);
+                    const block = new THREE.Group();
+                    block.position.set(-1*size, -1*size, 0);
                     this.mesh.add(block);
                     // Add particles using grid value
                     for (let i = 0; i < value; i++) {
                         //console.log(value);
                         const radius = .25;
-                        const segments = 50;
+                        const segments = 30;
                         const particleGeometry = new THREE.SphereGeometry(radius, segments, segments);
                         const particleMesh = new THREE.Mesh(particleGeometry, createMaterial());
-                        particleMesh.position.x = x + 0.25*i;
-                        particleMesh.position.y = y + 0.25*i;
+                        if (i === 0) {
+                            particleMesh.position.set(.25, 0, 0);
+                        } else if (i === 1) {
+                            particleMesh.position.set(0, .25, 0);
+                        } else if (i === 2) {
+                            particleMesh.position.set(0, 0, .25);
+                        }
                         block.add(particleMesh);
                     }
                 }
@@ -177,8 +183,8 @@
                     world[i] = new Array(columns);
                     particleWorld[i] = new Array(columns);
                     for (let j = 0; j < world[i].length; j++) {
-                        world[i][j] = Math.floor(Math.random() * 4);
-                       particleWorld[i][j] = new ParticleBlock(i, j, world[i][j], 1);
+                        world[i][j] = 2/*Math.floor(Math.random() * 4)*/;
+                        particleWorld[i][j] = new ParticleBlock(i, j, world[i][j], 1, 6);
                         scene.add(particleWorld[i][j].mesh);
                     }
                 }
@@ -199,7 +205,7 @@
                 } 
             }*/
 
-            world = createWorld(12, 12);
+            world = createWorld(size, size);
             printWorld(world);
 
             // Create BoxGeometry(Shape of the object)
